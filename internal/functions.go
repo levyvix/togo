@@ -7,6 +7,7 @@ import (
 	"levyvix/go-todo-list/models"
 	"log"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -192,7 +193,7 @@ func DeleteFunc(args []string) {
 		}
 	} else {
 		// Se não há mais tarefas, limpa o arquivo
-		err = os.WriteFile("tasks.json", []byte("[]"), 0644)
+		err = os.WriteFile(TasksFileName, []byte("[]"), 0644)
 		if err != nil {
 			log.Fatalf("Erro ao limpar arquivo de tarefas: %v\n", err)
 		}
@@ -206,7 +207,26 @@ func DeleteFunc(args []string) {
 // Formato: "02 Jan 2006 15:04"
 // Exemplo: "21 Dec 2025 14:30"
 func formatDate(t time.Time) string {
-	return fmt.Sprintf("%s", t.Format("02 Jan 2006 15:04"))
+	ingles := fmt.Sprintf("%s", t.Format("02 Jan 2006 15:04"))
+
+	repl := strings.NewReplacer(
+		"Jan", "Jan",
+		"Feb", "Fev",
+		"Mar", "Mar",
+		"Apr", "Abr",
+		"May", "Mai",
+		"Jun", "Jun",
+		"Jul", "Jul",
+		"Aug", "Ago",
+		"Sep", "Set",
+		"Oct", "Out",
+		"Nov", "Nov",
+		"Dec", "Dez",
+	)
+
+	portugues := repl.Replace(ingles)
+
+	return portugues
 }
 
 // ListFunc lê todas as tarefas do arquivo JSON e as exibe formatadas.

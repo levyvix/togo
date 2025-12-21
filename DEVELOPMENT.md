@@ -15,7 +15,7 @@ go mod download
 ### Build do projeto
 
 ```bash
-go build -o go-todo-list
+go build -o togo
 ```
 
 ### Executar testes
@@ -27,7 +27,7 @@ go test ./...
 ## Estrutura do Projeto
 
 ```
-go-todo-list/
+togo/
 ├── cmd/                    # Comandos da aplicação
 │   ├── root.go            # Comando raiz (ponto de entrada)
 │   ├── create.go          # Comando para criar tarefas

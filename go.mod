@@ -1,4 +1,4 @@
-module levyvix/go-todo-list
+module levyvix/togo
 
 go 1.25.4
 

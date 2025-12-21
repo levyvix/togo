@@ -5,7 +5,7 @@ package cmd
 
 import (
 	"fmt"
-	"levyvix/go-todo-list/internal"
+	"levyvix/togo/internal"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -18,8 +18,8 @@ import (
 //
 // Exemplos:
 //
-//	go-todo-list create "Estudar Go"
-//	go-todo-list create "Fazer compras"
+//	togo create "Estudar Go"
+//	togo create "Fazer compras"
 var createCmd = &cobra.Command{
 	Use:   "create <descrição>",
 	Short: "Criar uma nova tarefa",
@@ -29,9 +29,9 @@ A descrição deve ser fornecida como um argumento de string e não pode estar v
 A tarefa é criada com status pendente (não concluída).
 
 Exemplos:
-  go-todo-list create "Estudar Go"
-  go-todo-list create "Fazer compras"
-  go-todo-list create "Revisar código"`,
+  togo create "Estudar Go"
+  togo create "Fazer compras"
+  togo create "Revisar código"`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			fmt.Println("Erro: você deve fornecer uma descrição para a tarefa")

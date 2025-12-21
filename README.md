@@ -23,15 +23,15 @@ Uma aplicação de linha de comando simples e eficiente para gerenciar sua lista
 ### Instalação
 
 ```bash
-git clone https://github.com/levyvix/go-todo-list.git
-cd go-todo-list
+git clone https://github.com/levyvix/togo.git
+cd togo
 just build
 ```
 
 Ou sem `just`:
 
 ```bash
-go build -o go-todo-list
+go build -o togo
 ```
 
 ### Usar globalmente
@@ -53,14 +53,14 @@ go install ./...
 #### 1. Criar uma tarefa
 
 ```bash
-./go-todo-list create "Descrição da tarefa"
+./togo create "Descrição da tarefa"
 ```
 
 **Exemplo:**
 ```bash
-./go-todo-list create "Estudar Go"
-./go-todo-list create "Fazer compras"
-./go-todo-list create "Revisar código"
+./togo create "Estudar Go"
+./togo create "Fazer compras"
+./togo create "Revisar código"
 ```
 
 **Saída esperada:**
@@ -72,7 +72,7 @@ go install ./...
 #### 2. Listar todas as tarefas
 
 ```bash
-./go-todo-list list
+./togo list
 ```
 
 **Saída esperada:**
@@ -98,12 +98,12 @@ go install ./...
 #### 3. Marcar uma tarefa como concluída
 
 ```bash
-./go-todo-list done <id>
+./togo done <id>
 ```
 
 **Exemplo:**
 ```bash
-./go-todo-list done 1
+./togo done 1
 ```
 
 **Saída esperada:**
@@ -114,12 +114,12 @@ go install ./...
 #### 4. Deletar uma tarefa
 
 ```bash
-./go-todo-list delete <id>
+./togo delete <id>
 ```
 
 **Exemplo:**
 ```bash
-./go-todo-list delete 2
+./togo delete 2
 ```
 
 **Saída esperada:**
@@ -132,9 +132,9 @@ go install ./...
 Para ver a ajuda dos comandos:
 
 ```bash
-./go-todo-list --help
-./go-todo-list create --help
-./go-todo-list list --help
+./togo --help
+./togo create --help
+./togo list --help
 ```
 
 ## Estrutura de Dados
@@ -263,7 +263,7 @@ Para instalar `just`, veja: https://github.com/casey/just
 ## Estrutura do Projeto
 
 ```
-go-todo-list/
+togo/
 ├── cmd/                  # Comandos da aplicação
 │   ├── root.go          # Comando raiz
 │   ├── create.go        # Comando create

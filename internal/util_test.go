@@ -3,16 +3,34 @@ package internal
 import (
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"levyvix/go-todo-list/models"
 )
 
+// setupTest cria um arquivo temporário para testes e retorna função de limpeza
+func setupTest(t *testing.T) (cleanup func()) {
+	t.Helper()
+
+	// Cria diretório temporário (limpeza automática pelo Go)
+	tempDir := t.TempDir()
+
+	// Guarda nome original e define novo
+	originalFileName := TasksFileName
+	TasksFileName = filepath.Join(tempDir, "tasks.json")
+
+	// Retorna função para restaurar nome original
+	return func() {
+		TasksFileName = originalFileName
+	}
+}
+
 // TestReadJsonFileNotExists testa leitura quando arquivo não existe
 func TestReadJsonFileNotExists(t *testing.T) {
-	// Limpar arquivo se existir
-	os.Remove(JsonFileName)
+	cleanup := setupTest(t)
+	defer cleanup()
 
 	data, err := ReadJsonFile()
 
@@ -28,14 +46,15 @@ func TestReadJsonFileNotExists(t *testing.T) {
 
 // TestReadJsonFileExists testa leitura quando arquivo existe
 func TestReadJsonFileExists(t *testing.T) {
-	defer os.Remove(JsonFileName)
+	cleanup := setupTest(t)
+	defer cleanup()
 
 	// Criar arquivo de teste
 	testData := []models.Task{
 		{ID: 1, Description: "Test", Done: false, CreatedAt: time.Now()},
 	}
 	jsonData, _ := json.MarshalIndent(testData, "", "  ")
-	os.WriteFile(JsonFileName, jsonData, 0644)
+	os.WriteFile(TasksFileName, jsonData, 0644)
 
 	// Ler arquivo
 	data, err := ReadJsonFile()
@@ -58,7 +77,8 @@ func TestReadJsonFileExists(t *testing.T) {
 
 // TestWriteToJsonNewFile testa escrita em arquivo novo
 func TestWriteToJsonNewFile(t *testing.T) {
-	defer os.Remove(JsonFileName)
+	cleanup := setupTest(t)
+	defer cleanup()
 
 	task := models.Task{
 		ID:          1,
@@ -75,7 +95,7 @@ func TestWriteToJsonNewFile(t *testing.T) {
 	}
 
 	// Validar que arquivo foi criado
-	if _, err := os.Stat(JsonFileName); os.IsNotExist(err) {
+	if _, err := os.Stat(TasksFileName); os.IsNotExist(err) {
 		t.Errorf("WriteToJson() did not create file")
 	}
 
@@ -91,7 +111,8 @@ func TestWriteToJsonNewFile(t *testing.T) {
 
 // TestWriteToJsonAppend testa adição em arquivo existente
 func TestWriteToJsonAppend(t *testing.T) {
-	defer os.Remove(JsonFileName)
+	cleanup := setupTest(t)
+	defer cleanup()
 
 	// Primeira tarefa
 	task1 := models.Task{
@@ -127,7 +148,8 @@ func TestWriteToJsonAppend(t *testing.T) {
 
 // TestSaveTasksToFileEmpty testa salvar lista vazia
 func TestSaveTasksToFileEmpty(t *testing.T) {
-	defer os.Remove(JsonFileName)
+	cleanup := setupTest(t)
+	defer cleanup()
 
 	tasks := []models.Task{}
 
@@ -146,7 +168,8 @@ func TestSaveTasksToFileEmpty(t *testing.T) {
 
 // TestSaveTasksToFileMultiple testa salvar múltiplas tarefas
 func TestSaveTasksToFileMultiple(t *testing.T) {
-	defer os.Remove(JsonFileName)
+	cleanup := setupTest(t)
+	defer cleanup()
 
 	now := time.Now()
 	tasks := []models.Task{
@@ -178,7 +201,8 @@ func TestSaveTasksToFileMultiple(t *testing.T) {
 
 // TestJsonFileFormatting testa que o arquivo JSON está bem formatado
 func TestJsonFileFormatting(t *testing.T) {
-	defer os.Remove(JsonFileName)
+	cleanup := setupTest(t)
+	defer cleanup()
 
 	tasks := []models.Task{
 		{ID: 1, Description: "Test", Done: false, CreatedAt: time.Now()},
@@ -187,7 +211,7 @@ func TestJsonFileFormatting(t *testing.T) {
 	saveTasksToFile(tasks)
 
 	// Ler arquivo como string
-	data, _ := os.ReadFile(JsonFileName)
+	data, _ := os.ReadFile(TasksFileName)
 	content := string(data)
 
 	// Deve ser indentado (conter espacos)
@@ -205,7 +229,8 @@ func TestJsonFileFormatting(t *testing.T) {
 
 // TestJsonSpecialCharacters testa descrições com caracteres especiais
 func TestJsonSpecialCharacters(t *testing.T) {
-	defer os.Remove(JsonFileName)
+	cleanup := setupTest(t)
+	defer cleanup()
 
 	specialDesc := `Tarefa com "aspas" e 'apóstrofos' e \barra`
 	task := models.Task{

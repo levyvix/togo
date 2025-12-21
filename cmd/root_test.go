@@ -1,9 +1,28 @@
 package cmd
 
 import (
-	"os"
+	"path/filepath"
 	"testing"
+
+	"levyvix/go-todo-list/internal"
 )
+
+// setupTest cria um arquivo temporário para testes e retorna função de limpeza
+func setupTest(t *testing.T) (cleanup func()) {
+	t.Helper()
+
+	// Cria diretório temporário (limpeza automática pelo Go)
+	tempDir := t.TempDir()
+
+	// Guarda nome original e define novo
+	originalFileName := internal.TasksFileName
+	internal.TasksFileName = filepath.Join(tempDir, "tasks.json")
+
+	// Retorna função para restaurar nome original
+	return func() {
+		internal.TasksFileName = originalFileName
+	}
+}
 
 // TestRootCmdHelp testa se o help funciona
 func TestRootCmdHelp(t *testing.T) {
@@ -39,6 +58,6 @@ func TestRootCmdSubcommands(t *testing.T) {
 
 // TestCleanupTasksJsonFile limpa o arquivo de teste após os testes
 func TestCleanupTasksJsonFile(t *testing.T) {
-	// Chamado no final para limpeza
-	os.Remove("tasks.json")
+	cleanup := setupTest(t)
+	defer cleanup()
 }

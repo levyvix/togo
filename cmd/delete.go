@@ -5,7 +5,7 @@ package cmd
 
 import (
 	"fmt"
-	"levyvix/go-todo-list/internal"
+	"levyvix/togo/internal"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -16,8 +16,8 @@ import (
 //
 // Exemplos:
 //
-//	go-todo-list delete 1
-//	go-todo-list delete 5
+//	togo delete 1
+//	togo delete 5
 var deleteCmd = &cobra.Command{
 	Use:   "delete <id>",
 	Short: "Deletar uma tarefa",
@@ -26,7 +26,7 @@ var deleteCmd = &cobra.Command{
 O ID deve ser fornecido como um argumento numérico.
 
 Exemplo:
-  go-todo-list delete 1`,
+  togo delete 1`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			fmt.Println("Erro: você deve fornecer o ID da tarefa a deletar")

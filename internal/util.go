@@ -13,6 +13,10 @@ const (
 	JsonFileName = "tasks.json"
 )
 
+// TasksFileName é o nome do arquivo JSON usado para armazenamento.
+// Pode ser sobrescrito nos testes para usar arquivos temporários.
+var TasksFileName = JsonFileName
+
 // ReadJsonFile lê o arquivo JSON de tarefas.
 //
 // Retorna:
@@ -23,7 +27,7 @@ const (
 // Se o arquivo existir mas houver erro ao ler, retorna erro apropriado.
 func ReadJsonFile() ([]byte, error) {
 	// Tenta ler o arquivo de tarefas
-	data, err := os.ReadFile(JsonFileName)
+	data, err := os.ReadFile(TasksFileName)
 	if err != nil {
 		if os.IsNotExist(err) {
 			// Arquivo não existe - retorna slice vazio (normal na primeira execução)
@@ -80,7 +84,7 @@ func WriteToJson(task models.Task) error {
 	}
 
 	// Escreve arquivo com permissões 0644 (rw-r--r--)
-	err = os.WriteFile(JsonFileName, task_json, 0644)
+	err = os.WriteFile(TasksFileName, task_json, 0644)
 	if err != nil {
 		return fmt.Errorf("erro ao salvar arquivo JSON: %w", err)
 	}
@@ -105,7 +109,7 @@ func saveTasksToFile(tasks []models.Task) error {
 	}
 
 	// Escreve arquivo com permissões 0644 (rw-r--r--)
-	err = os.WriteFile(JsonFileName, task_json, 0644)
+	err = os.WriteFile(TasksFileName, task_json, 0644)
 	if err != nil {
 		return fmt.Errorf("erro ao salvar arquivo JSON: %w", err)
 	}

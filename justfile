@@ -6,7 +6,7 @@ set shell := ["bash", "-c"]
 set positional-arguments
 
 # Variáveis
-BINARY_NAME := "go-todo-list"
+BINARY_NAME := "togo"
 VERSION := "1.1.0"
 
 # Mostrar ajuda (padrão)

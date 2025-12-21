@@ -5,7 +5,7 @@ package cmd
 
 import (
 	"fmt"
-	"levyvix/go-todo-list/internal"
+	"levyvix/togo/internal"
 	"os"
 
 	"github.com/spf13/cobra"

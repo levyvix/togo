@@ -5,7 +5,7 @@ package cmd
 
 import (
 	"fmt"
-	"levyvix/go-todo-list/internal"
+	"levyvix/togo/internal"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -16,8 +16,8 @@ import (
 //
 // Exemplos:
 //
-//	go-todo-list done 1
-//	go-todo-list done 5
+//	togo done 1
+//	togo done 5
 var doneCmd = &cobra.Command{
 	Use:   "done <id>",
 	Short: "Marcar uma tarefa como concluída",
@@ -26,7 +26,7 @@ var doneCmd = &cobra.Command{
 O ID deve ser fornecido como um argumento numérico.
 
 Exemplo:
-  go-todo-list done 1`,
+  togo done 1`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			fmt.Println("Erro: você deve fornecer o ID da tarefa a marcar como concluída")

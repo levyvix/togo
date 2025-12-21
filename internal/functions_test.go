@@ -11,8 +11,8 @@ import (
 
 // TestGetNextID testa a função que calcula o próximo ID sequencial
 func TestGetNextID(t *testing.T) {
-	// Limpeza antes do teste
-	defer os.Remove(JsonFileName)
+	cleanup := setupTest(t)
+	defer cleanup()
 
 	tests := []struct {
 		name        string
@@ -45,13 +45,11 @@ func TestGetNextID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Limpar arquivo anterior
-			os.Remove(JsonFileName)
 
 			// Se há tarefas, salvar no arquivo
 			if len(tt.tasks) > 0 {
 				data, _ := json.MarshalIndent(tt.tasks, "", "  ")
-				os.WriteFile(JsonFileName, data, 0644)
+				os.WriteFile(TasksFileName, data, 0644)
 			}
 
 			got, err := getNextID()
@@ -80,7 +78,8 @@ func TestFormatDate(t *testing.T) {
 
 // TestCreateTaskStructure testa se a struct Task é criada corretamente
 func TestCreateTaskStructure(t *testing.T) {
-	defer os.Remove(JsonFileName)
+	cleanup := setupTest(t)
+	defer cleanup()
 
 	// Simular criação de tarefa
 	nextID := 1
@@ -109,7 +108,8 @@ func TestCreateTaskStructure(t *testing.T) {
 
 // TestTaskMarkedAsDone testa se uma tarefa pode ser marcada como concluída
 func TestTaskMarkedAsDone(t *testing.T) {
-	defer os.Remove(JsonFileName)
+	cleanup := setupTest(t)
+	defer cleanup()
 
 	// Criar tarefa
 	task := models.Task{
@@ -136,7 +136,8 @@ func TestTaskMarkedAsDone(t *testing.T) {
 
 // TestWriteAndReadTask testa salvar e ler uma tarefa
 func TestWriteAndReadTask(t *testing.T) {
-	defer os.Remove(JsonFileName)
+	cleanup := setupTest(t)
+	defer cleanup()
 
 	// Criar e salvar tarefa
 	task := models.Task{
@@ -175,7 +176,8 @@ func TestWriteAndReadTask(t *testing.T) {
 
 // TestMultipleTasks testa com múltiplas tarefas
 func TestMultipleTasks(t *testing.T) {
-	defer os.Remove(JsonFileName)
+	cleanup := setupTest(t)
+	defer cleanup()
 
 	tasks := []models.Task{
 		{ID: 1, Description: "Task 1", Done: false, CreatedAt: time.Now()},
@@ -211,7 +213,8 @@ func TestMultipleTasks(t *testing.T) {
 
 // TestRemoveTask testa remoção de tarefa de um slice
 func TestRemoveTask(t *testing.T) {
-	defer os.Remove(JsonFileName)
+	cleanup := setupTest(t)
+	defer cleanup()
 
 	tasks := []models.Task{
 		{ID: 1, Description: "Task 1", Done: false, CreatedAt: time.Now()},

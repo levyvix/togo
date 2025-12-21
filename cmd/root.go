@@ -14,9 +14,9 @@ import (
 // rootCmd representa o comando raiz da aplicação.
 // É o ponto de entrada para todos os subcomandos (create, list, done, delete).
 var rootCmd = &cobra.Command{
-	Use:   "go-todo-list",
+	Use:   "togo",
 	Short: "Gerenciador de tarefas em linha de comando",
-	Long: `go-todo-list é uma aplicação CLI simples para gerenciar sua lista de tarefas.
+	Long: `togo é uma aplicação CLI simples para gerenciar sua lista de tarefas.
 
 Comandos disponíveis:
   create <descrição>  - Criar uma nova tarefa
@@ -25,12 +25,12 @@ Comandos disponíveis:
   delete <id>         - Deletar uma tarefa
 
 Exemplos:
-  go-todo-list create "Estudar Go"
-  go-todo-list list
-  go-todo-list done 1
-  go-todo-list delete 2
+  togo create "Estudar Go"
+  togo list
+  togo done 1
+  togo delete 2
 
-Use "go-todo-list [command] --help" para mais informações sobre um comando.`,
+Use "togo [command] --help" para mais informações sobre um comando.`,
 }
 
 // Execute adiciona todos os subcomandos ao comando raiz e configura as flags.
