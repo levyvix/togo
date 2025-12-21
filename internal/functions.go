@@ -7,6 +7,7 @@ import (
 	"levyvix/togo/models"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -278,4 +279,51 @@ func ListFunc() {
 		}
 		fmt.Println("--------------------------------------------------")
 	}
+}
+
+func EditFunc(args []string) {
+	if len(args) != 2 {
+		fmt.Printf("Somente ID e Nova Descrição são permitidos. Voce passou %d argumentos\n", len(args))
+		return
+	}
+	id := args[0]
+	novaDescricao := args[1]
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	currentData, err := ReadJsonFile()
+	if err != nil {
+		log.Fatalf("Erro ao ler arquivo JSON para editar: %v\n", err)
+	}
+	if len(currentData) == 0 {
+		fmt.Println("Não tem nenhuma task pra editar!")
+		return
+	}
+	var tasks []models.Task
+	err = json.Unmarshal(currentData, &tasks)
+
+	taskID, err := strconv.Atoi(id)
+	if err != nil {
+		log.Fatalf("Erro: ID deve ser um numero. Voce passou %v. %v", id, err)
+	}
+
+	found := false
+	for i := range tasks {
+		if tasks[i].ID == taskID {
+			found = true
+			tasks[i].Description = novaDescricao
+			break
+		}
+	}
+	if !found {
+		fmt.Printf("Nao foi possivel encontrar a tarefa de ID: %d\n", taskID)
+		return
+	}
+
+	err = saveTasksToFile(tasks)
+	if err != nil {
+		log.Fatalf("Erro ao salvar as tarefas para o arquivo: %v\n", err)
+	}
+	fmt.Printf("Tarefa atualizada com sucesso: %d | %s\n", taskID, novaDescricao)
 }
