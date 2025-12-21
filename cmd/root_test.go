@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"levyvix/go-todo-list/internal"
+	"levyvix/togo/internal"
 )
 
 // setupTest cria um arquivo temporário para testes e retorna função de limpeza

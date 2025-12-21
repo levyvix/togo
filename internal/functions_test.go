@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"levyvix/go-todo-list/models"
+	"levyvix/togo/models"
 )
 
 // TestGetNextID testa a função que calcula o próximo ID sequencial
@@ -68,7 +68,7 @@ func TestGetNextID(t *testing.T) {
 // TestFormatDate testa a formatação de datas
 func TestFormatDate(t *testing.T) {
 	testTime := time.Date(2025, 12, 21, 14, 30, 0, 0, time.UTC)
-	expected := "21 Dec 2025 14:30"
+	expected := "21 Dez 2025 14:30"
 	got := formatDate(testTime)
 
 	if got != expected {

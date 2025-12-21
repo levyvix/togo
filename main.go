@@ -7,7 +7,7 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 // Inicializa e executa a aplicação CLI usando o framework Cobra.
 package main
 
-import "levyvix/go-todo-list/cmd"
+import "levyvix/togo/cmd"
 
 // main é a função de entrada da aplicação.
 // Chama cmd.Execute() para iniciar a interface CLI.

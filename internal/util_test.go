@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"levyvix/go-todo-list/models"
+	"levyvix/togo/models"
 )
 
 // setupTest cria um arquivo temporário para testes e retorna função de limpeza

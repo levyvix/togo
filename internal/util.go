@@ -4,7 +4,7 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
-	"levyvix/go-todo-list/models"
+	"levyvix/togo/models"
 	"os"
 )
 
