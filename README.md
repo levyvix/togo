@@ -6,11 +6,11 @@ Uma aplicação de linha de comando simples e eficiente para gerenciar sua lista
 
 - ✅ Criar novas tarefas com ID sequencial único
 - 📋 Listar todas as tarefas com detalhes
-- 💾 Persistência de dados em JSON
+- 💾 Persistência de dados em SQLite
 - ✓ Marcar tarefas como concluídas
 - 🗑️ Deletar tarefas
+- ✏️ Editar descrição de tarefas
 - 🕐 Registro automático de datas de criação e conclusão
-- 🔒 Proteção contra race conditions com Mutex
 - 🎯 Interface CLI intuitiva
 - 📊 Formatação clara com emojis
 
@@ -139,33 +139,31 @@ Para ver a ajuda dos comandos:
 
 ## Estrutura de Dados
 
-As tarefas são armazenadas em um arquivo JSON (`tasks.json`) com a seguinte estrutura:
+As tarefas são persistidas em um banco de dados SQLite (`tasks.db`) usando GORM como ORM.
 
-```json
-[
-  {
-    "id": 1,
-    "description": "Estudar Go",
-    "done": false,
-    "createdAt": "2025-12-21T14:30:00Z",
-    "doneAt": null
-  },
-  {
-    "id": 2,
-    "description": "Fazer compras",
-    "done": true,
-    "createdAt": "2025-12-21T14:31:00Z",
-    "doneAt": "2025-12-21T15:45:00Z"
-  }
-]
+**Tabela: `tasks`**
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `id` | INTEGER PRIMARY KEY | Identificador único (auto-incremento) |
+| `created_at` | TIMESTAMP | Data e hora de criação (automático) |
+| `updated_at` | TIMESTAMP | Data e hora da última atualização (automático) |
+| `deleted_at` | TIMESTAMP | Data de exclusão (soft delete, NULL se ativo) |
+| `description` | TEXT | Descrição da tarefa |
+| `done` | BOOLEAN | Status de conclusão (0 = pendente, 1 = concluída) |
+| `done_at` | TIMESTAMP | Data e hora da conclusão (NULL se pendente) |
+
+**Modelo (Go):**
+```go
+type Task struct {
+    gorm.Model
+    Description string
+    Done        bool
+    DoneAt      *time.Time
+}
 ```
 
-**Campos:**
-- `id`: Identificador único sequencial (começando em 1)
-- `description`: Descrição da tarefa
-- `done`: Status de conclusão (true/false)
-- `createdAt`: Data e hora de criação
-- `doneAt`: Data e hora de conclusão (null se pendente)
+O `gorm.Model` fornece automaticamente: `ID`, `CreatedAt`, `UpdatedAt`, `DeletedAt`
 
 ## Testes
 
