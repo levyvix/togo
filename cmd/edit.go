@@ -1,6 +1,3 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -9,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// editCmd represents the edit command
 var editCmd = &cobra.Command{
 	Use:   "edit",
 	Short: "Edita a descricao de uma tarefa",

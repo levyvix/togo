@@ -1,6 +1,3 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -9,13 +6,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// doneCmd representa o comando para marcar uma tarefa como concluída.
-// Aceita um argumento: o ID da tarefa.
-//
-// Exemplos:
-//
-//	togo done 1
-//	togo done 5
 var doneCmd = &cobra.Command{
 	Use:   "done <id>",
 	Short: "Marcar uma tarefa como concluída",

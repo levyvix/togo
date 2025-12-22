@@ -1,6 +1,3 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -9,15 +6,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// createCmd representa o comando para criar uma nova tarefa.
-// Aceita um argumento obrigatório: a descrição da tarefa.
-//
-// A descrição não pode estar vazia e será armazenada com um ID sequencial único.
-//
-// Exemplos:
-//
-//	togo create "Estudar Go"
-//	togo create "Fazer compras"
 var createCmd = &cobra.Command{
 	Use:   "create <descrição>",
 	Short: "Criar uma nova tarefa",

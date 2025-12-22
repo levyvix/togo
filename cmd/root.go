@@ -1,8 +1,3 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-*/
-
-// Package cmd define os comandos CLI da aplicação usando o framework Cobra.
 package cmd
 
 import (
@@ -11,8 +6,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// rootCmd representa o comando raiz da aplicação.
-// É o ponto de entrada para todos os subcomandos (create, list, done, delete).
 var rootCmd = &cobra.Command{
 	Use:   "togo",
 	Short: "Gerenciador de tarefas em linha de comando",
@@ -23,18 +16,19 @@ Comandos disponíveis:
   list                - Listar todas as tarefas
   done <id>           - Marcar uma tarefa como concluída
   delete <id>         - Deletar uma tarefa
+	edit <id> <nova descricao> - Editar a descricao de uma tarefa
 
 Exemplos:
   togo create "Estudar Go"
   togo list
   togo done 1
   togo delete 2
+	togo edit 1 "nova descricao"
+
 
 Use "togo [command] --help" para mais informações sobre um comando.`,
 }
 
-// Execute adiciona todos os subcomandos ao comando raiz e configura as flags.
-// É chamado uma única vez por main.main().
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {

@@ -1,6 +1,3 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -9,13 +6,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// deleteCmd representa o comando para deletar uma tarefa.
-// Aceita um argumento: o ID da tarefa.
-//
-// Exemplos:
-//
-//	togo delete 1
-//	togo delete 5
 var deleteCmd = &cobra.Command{
 	Use:   "delete <id>",
 	Short: "Deletar uma tarefa",
