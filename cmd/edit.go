@@ -18,7 +18,7 @@ var editCmd = &cobra.Command{
 Exemplo:
 	togo edit <id> <nova descrição>`,
 	Run: func(cmd *cobra.Command, args []string) {
-		internal.EditFunc(args)
+		internal.EditFuncDB(args)
 	},
 }
 

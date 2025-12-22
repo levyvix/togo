@@ -4,26 +4,12 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
 	"levyvix/togo/internal"
-	"os"
+	"log"
 
 	"github.com/spf13/cobra"
 )
 
-// listCmd representa o comando para listar todas as tarefas.
-// Não aceita nenhum argumento.
-//
-// Exibe todas as tarefas em ordem de criação, mostrando:
-// - ID sequencial único
-// - Status (✓ concluída ou ⏳ pendente)
-// - Descrição
-// - Data de criação
-// - Data de conclusão (se aplicável)
-//
-// Exemplos:
-//
-//	go-todo-list list
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Listar todas as tarefas",
@@ -37,13 +23,12 @@ var listCmd = &cobra.Command{
 Este comando não aceita argumentos.
 
 Exemplo:
-  go-todo-list list`,
+  togo list`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) > 0 {
-			fmt.Printf("Erro: este comando não aceita argumentos. Você passou %d argumentos\n", len(args))
-			os.Exit(1)
+		if len(args) != 0 {
+			log.Fatalf("Erro: esse comando nao aceita argumentos. voce passou %d argumentos\n", len(args))
 		}
-		internal.ListFunc()
+		internal.ListFuncDB()
 	},
 }
 

@@ -4,9 +4,7 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
 	"levyvix/togo/internal"
-	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -26,17 +24,10 @@ var deleteCmd = &cobra.Command{
 O ID deve ser fornecido como um argumento numérico.
 
 Exemplo:
-  togo delete 1`,
+  togo delete 1
+  togo delete 5`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) == 0 {
-			fmt.Println("Erro: você deve fornecer o ID da tarefa a deletar")
-			os.Exit(1)
-		}
-		if len(args) > 1 {
-			fmt.Printf("Erro: apenas 1 argumento é permitido. Você passou %d argumentos\n", len(args))
-			os.Exit(1)
-		}
-		internal.DeleteFunc(args)
+		internal.DeleteFuncDB(args)
 	},
 }
 

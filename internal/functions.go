@@ -2,11 +2,10 @@
 package internal
 
 import (
-	"encoding/json"
 	"fmt"
-	"levyvix/togo/models"
+	"levyvix/togo/internal/database"
+	"levyvix/togo/schema"
 	"log"
-	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -16,191 +15,56 @@ import (
 // mu protege o acesso ao arquivo JSON contra race conditions
 var mu sync.Mutex
 
-// CreateFunc cria uma nova tarefa e a salva no arquivo JSON.
-//
-// Args:
-//   - args: slice de strings contendo a descrição da tarefa no índice 0
-//
-// A função cria um novo Task struct com:
-// - Description: valor fornecido em args[0]
-// - ID: próximo ID sequencial
-// - Done: false (nova tarefa é sempre pendente)
-// - CreatedAt: timestamp atual
-// - DoneAt: nil (não marcada como concluída)
-//
-// Em caso de erro ao salvar, exibe mensagem de erro e encerra com status 1.
-func CreateFunc(args []string) {
-	description := args[0]
-
-	// Obter próximo ID
-	nextID, err := getNextID()
-	if err != nil {
-		log.Fatalf("Erro ao obter próximo ID: %v\n", err)
+func CreateFuncDB(args []string) {
+	if len(args) != 1 {
+		log.Fatalf("Comando aceita apenas um argumento. Voce passou %d argumentos\n", len(args))
 	}
 
-	t := models.Task{
-		ID:          nextID,
-		Description: description,
+	descricao := args[0]
+	novaTask := schema.Task{
+		Description: descricao,
 		Done:        false,
-		CreatedAt:   time.Now(),
 		DoneAt:      nil,
 	}
-
-	err = WriteToJson(t)
-	if err != nil {
-		log.Fatalf("Erro ao salvar tarefa: %v\n", err)
-	}
-
-	fmt.Printf("✓ Tarefa criada! ID: %d | '%s'\n", t.ID, t.Description)
+	database.DB.Create(&novaTask)
+	fmt.Println("Task Criada!")
 }
 
-// getNextID calcula o próximo ID sequencial disponível.
-// Lê todas as tarefas e retorna max(ID) + 1.
-// Se não houver tarefas, retorna 1.
-func getNextID() (int, error) {
-	currentData, err := ReadJsonFile()
+func DoneFuncDB(args []string) {
+	if len(args) != 1 {
+		log.Fatalf("Esse comando aceita somente 1 argumento. Você passou %d argumentos\n", len(args))
+	}
+	id, err := strconv.Atoi(args[0])
 	if err != nil {
-		return 0, err
+		fmt.Printf("Voce precisa passar um numero. Voce passou %v\n", args[0])
 	}
+	var t schema.Task
+	database.DB.First(&t, id)
 
-	var tasks []models.Task
-	if len(currentData) > 0 {
-		err = json.Unmarshal(currentData, &tasks)
-		if err != nil {
-			return 0, err
-		}
-	}
-
-	maxID := 0
-	for _, t := range tasks {
-		if t.ID > maxID {
-			maxID = t.ID
-		}
-	}
-
-	return maxID + 1, nil
-}
-
-// DoneFunc marca uma tarefa como concluída pelo ID.
-//
-// Args:
-//   - args: slice contendo o ID da tarefa no índice 0
-//
-// Se a tarefa for encontrada, marca como Done=true e registra DoneAt com timestamp atual.
-// Se não encontrada, exibe erro.
-func DoneFunc(args []string) {
-	if len(args) == 0 {
-		log.Fatal("Erro: você deve fornecer o ID da tarefa a marcar como concluída")
-	}
-
-	var taskID int
-	_, err := fmt.Sscanf(args[0], "%d", &taskID)
-	if err != nil {
-		log.Fatalf("Erro: ID deve ser um número. Você passou '%s'\n", args[0])
-	}
-
-	mu.Lock()
-	defer mu.Unlock()
-
-	currentData, err := ReadJsonFile()
-	if err != nil {
-		log.Fatalf("Erro ao ler tarefas: %v\n", err)
-	}
-
-	var tasks []models.Task
-	if len(currentData) > 0 {
-		err = json.Unmarshal(currentData, &tasks)
-		if err != nil {
-			log.Fatalf("Erro ao decodificar JSON: %v\n", err)
-		}
-	}
-
-	found := false
+	t.Done = true
 	now := time.Now()
-	for i := range tasks {
-		if tasks[i].ID == taskID {
-			tasks[i].Done = true
-			tasks[i].DoneAt = &now
-			found = true
-			break
-		}
-	}
+	t.DoneAt = &now
+	database.DB.Save(&t)
+	fmt.Println("Tarefa marcada como concluida!")
 
-	if !found {
-		log.Fatalf("Erro: tarefa com ID %d não encontrada\n", taskID)
-	}
-
-	err = saveTasksToFile(tasks)
-	if err != nil {
-		log.Fatalf("Erro ao salvar tarefas: %v\n", err)
-	}
-
-	fmt.Printf("✓ Tarefa %d marcada como concluída!\n", taskID)
 }
 
-// DeleteFunc remove uma tarefa pelo ID.
-//
-// Args:
-//   - args: slice contendo o ID da tarefa no índice 0
-//
-// Se a tarefa for encontrada, a remove da lista.
-// Se não encontrada, exibe erro.
-func DeleteFunc(args []string) {
-	if len(args) == 0 {
-		log.Fatal("Erro: você deve fornecer o ID da tarefa a deletar")
+func DeleteFuncDB(args []string) {
+	if len(args) != 1 {
+		log.Fatal("Erro: voce deve fornecer o ID da tarefa a deletar\n")
 	}
 
-	var taskID int
-	_, err := fmt.Sscanf(args[0], "%d", &taskID)
+	id := args[0]
+	taskID, err := strconv.Atoi(id)
 	if err != nil {
-		log.Fatalf("Erro: ID deve ser um número. Você passou '%s'\n", args[0])
+		fmt.Printf("Voce precisa passar um inteiro para o ID. voce passou %v\n", id)
 	}
 
-	mu.Lock()
-	defer mu.Unlock()
-
-	currentData, err := ReadJsonFile()
-	if err != nil {
-		log.Fatalf("Erro ao ler tarefas: %v\n", err)
+	result := database.DB.Delete(&schema.Task{}, taskID)
+	if result.RowsAffected == 0 {
+		fmt.Printf("Nao foi possivel encontrar a tarefa com ID %v\n", id)
 	}
-
-	var tasks []models.Task
-	if len(currentData) > 0 {
-		err = json.Unmarshal(currentData, &tasks)
-		if err != nil {
-			log.Fatalf("Erro ao decodificar JSON: %v\n", err)
-		}
-	}
-
-	newTasks := make([]models.Task, 0)
-	found := false
-
-	for _, t := range tasks {
-		if t.ID != taskID {
-			newTasks = append(newTasks, t)
-		} else {
-			found = true
-		}
-	}
-
-	if !found {
-		log.Fatalf("Erro: tarefa com ID %d não encontrada\n", taskID)
-	}
-
-	if len(newTasks) > 0 {
-		err = saveTasksToFile(newTasks)
-		if err != nil {
-			log.Fatalf("Erro ao salvar tarefas: %v\n", err)
-		}
-	} else {
-		// Se não há mais tarefas, limpa o arquivo
-		err = os.WriteFile(TasksFileName, []byte("[]"), 0644)
-		if err != nil {
-			log.Fatalf("Erro ao limpar arquivo de tarefas: %v\n", err)
-		}
-	}
-
-	fmt.Printf("✓ Tarefa %d deletada!\n", taskID)
+	fmt.Printf("Tarefa %v deletada com sucesso!\n", id)
 }
 
 // formatDate formata um time.Time para um formato legível.
@@ -230,38 +94,12 @@ func formatDate(t time.Time) string {
 	return portugues
 }
 
-// ListFunc lê todas as tarefas do arquivo JSON e as exibe formatadas.
-//
-// A função:
-// 1. Lê o arquivo JSON de tarefas
-// 2. Faz o parse dos dados para um slice de Task structs
-// 3. Se houver tarefas, exibe cada uma com:
-//   - ID
-//   - Descrição
-//   - Status de conclusão
-//   - Data de criação
-//   - Data de conclusão (se disponível)
-//
-// 4. Se não houver tarefas, exibe mensagem apropriada
-//
-// Em caso de erro ao ler o arquivo, exibe mensagem de erro e encerra com código 1.
-func ListFunc() {
-	currentData, err := ReadJsonFile()
-	if err != nil {
-		log.Fatalf("Erro ao ler arquivo de tarefas: %v\n", err)
-	}
+func ListFuncDB() {
+	var tasks []schema.Task
 
-	var tasks []models.Task
-	if len(currentData) > 0 {
-		err = json.Unmarshal(currentData, &tasks)
-		if err != nil {
-			log.Fatalf("Erro ao decodificar arquivo JSON: %v\n", err)
-		}
-	}
-
-	if len(tasks) == 0 {
-		fmt.Println("📭 Nenhuma tarefa encontrada. Use 'create' para adicionar uma.")
-		return
+	result := database.DB.Order("id asc").Find(&tasks)
+	if result.RowsAffected == 0 {
+		fmt.Println("Nenhuma task para mostrar. Crie uma usando o comando 'create'")
 	}
 
 	fmt.Println("\n📋 Lista de Tarefas:")
@@ -281,7 +119,7 @@ func ListFunc() {
 	}
 }
 
-func EditFunc(args []string) {
+func EditFuncDB(args []string) {
 	if len(args) != 2 {
 		fmt.Printf("Somente ID e Nova Descrição são permitidos. Voce passou %d argumentos\n", len(args))
 		return
@@ -289,41 +127,20 @@ func EditFunc(args []string) {
 	id := args[0]
 	novaDescricao := args[1]
 
-	mu.Lock()
-	defer mu.Unlock()
-
-	currentData, err := ReadJsonFile()
-	if err != nil {
-		log.Fatalf("Erro ao ler arquivo JSON para editar: %v\n", err)
-	}
-	if len(currentData) == 0 {
-		fmt.Println("Não tem nenhuma task pra editar!")
-		return
-	}
-	var tasks []models.Task
-	err = json.Unmarshal(currentData, &tasks)
-
 	taskID, err := strconv.Atoi(id)
 	if err != nil {
-		log.Fatalf("Erro: ID deve ser um numero. Voce passou %v. %v", id, err)
+		fmt.Printf("Voce precisa passar um inteiro como ID. voce passou %v\n", id)
 	}
 
-	found := false
-	for i := range tasks {
-		if tasks[i].ID == taskID {
-			found = true
-			tasks[i].Description = novaDescricao
-			break
-		}
-	}
-	if !found {
-		fmt.Printf("Nao foi possivel encontrar a tarefa de ID: %d\n", taskID)
+	var t schema.Task
+	result := database.DB.First(&t, taskID)
+	if result.RowsAffected == 0 {
+		fmt.Printf("Nao achei tarefa com id %v\n", id)
 		return
 	}
 
-	err = saveTasksToFile(tasks)
-	if err != nil {
-		log.Fatalf("Erro ao salvar as tarefas para o arquivo: %v\n", err)
-	}
-	fmt.Printf("Tarefa atualizada com sucesso: %d | %s\n", taskID, novaDescricao)
+	t.Description = novaDescricao
+	database.DB.Save(&t)
+	fmt.Println("Tarefa atualizada com sucesso!")
+
 }
