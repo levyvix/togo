@@ -403,7 +403,7 @@ func TestListFuncDB(t *testing.T) {
 // BenchmarkFormatDate benchmarks the formatDate function
 func BenchmarkFormatDate(b *testing.B) {
 	t := time.Date(2025, 12, 21, 14, 30, 0, 0, time.UTC)
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		formatDate(t)
 	}
 }
@@ -417,8 +417,7 @@ func BenchmarkCreateFuncDB(b *testing.B) {
 	_, w, _ := os.Pipe()
 	os.Stdout = w
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		CreateFuncDB([]string{"Benchmark task"})
 	}
 
@@ -431,7 +430,7 @@ func BenchmarkListFuncDB(b *testing.B) {
 	clearDB(&testing.T{})
 
 	// Create 100 tasks
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		testDB.Create(&schema.Task{Description: fmt.Sprintf("Task %d", i)})
 	}
 
@@ -440,8 +439,7 @@ func BenchmarkListFuncDB(b *testing.B) {
 	_, w, _ := os.Pipe()
 	os.Stdout = w
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		ListFuncDB()
 	}
 
