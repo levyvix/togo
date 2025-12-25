@@ -5,6 +5,7 @@
 ### Pré-requisitos
 - Go 1.25.4 ou superior
 - Git
+- Justfiles (opcional, mas recomendado)
 
 ### Instalação das dependências
 
@@ -92,7 +93,7 @@ main.go
 
 ## Como adicionar um novo comando
 
-### 1. Criar arquivo em `cmd/newcommand.go`
+### 1. Criar arquivo em `cmd/newcommand.go`. ou rodar o comando com o `cobra-cli`: `cobra-cli add newCommand`
 
 ```go
 package cmd
@@ -134,7 +135,6 @@ func NewcommandFunc(args []string) {
 ```go
 if err != nil {
 	log.Fatalf("Erro ao fazer algo: %v", err)
-	os.Exit(1)
 }
 ```
 

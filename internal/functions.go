@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 const (
@@ -129,7 +131,7 @@ func ListFuncDB() error {
 	for _, t := range tasks {
 		status := "⏳"
 		if t.Done {
-			status = "✓"
+			status = "✅"
 		}
 
 		fmt.Printf("[%d] %s %s\n", t.ID, status, t.Description)
@@ -170,5 +172,22 @@ func EditFuncDB(args []string) error {
 	}
 
 	fmt.Println(MsgTaskUpdated)
+	return nil
+}
+
+func ClearDB(args []string) error {
+	if len(args) != 0 {
+		return fmt.Errorf("este comando nao aceita argumentos. voce passou %v argumentos", args)
+	}
+
+	// Usa o modelo Task para pegar automaticamente o nome da tabela
+	// AllowGlobalUpdate permite deletar sem WHERE clause
+	result := database.DB.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&schema.Task{})
+	if result.Error != nil {
+		return fmt.Errorf("erro ao tentar limpar a tabela: %w", result.Error)
+	}
+
+	fmt.Println("Tabela limpa com sucesso!")
+
 	return nil
 }

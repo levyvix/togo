@@ -584,7 +584,7 @@ func TestListFuncDB(t *testing.T) {
 				testDB.Create(&schema.Task{Description: "Incomplete", Done: false})
 				testDB.Create(&schema.Task{Description: "Complete", Done: true, DoneAt: &now})
 			},
-			checkContains: []string{"⏳", "✓"},
+			checkContains: []string{"⏳", "✅"},
 		},
 	}
 
@@ -611,6 +611,81 @@ func TestListFuncDB(t *testing.T) {
 			for _, expected := range tt.checkContains {
 				if !strings.Contains(outputStr, expected) {
 					t.Errorf("ListFuncDB() output should contain %q, got:\n%s", expected, outputStr)
+				}
+			}
+		})
+	}
+}
+
+// TestClearDB tests clearing all tasks from database
+func TestClearDB(t *testing.T) {
+	tests := []struct {
+		name      string
+		setup     func()
+		args      []string
+		wantError bool
+	}{
+		{
+			name: "Clear database with tasks",
+			setup: func() {
+				clearDB(t)
+				testDB.Create(&schema.Task{Description: "Task 1"})
+				testDB.Create(&schema.Task{Description: "Task 2"})
+				testDB.Create(&schema.Task{Description: "Task 3"})
+			},
+			args:      []string{},
+			wantError: false,
+		},
+		{
+			name: "Clear empty database",
+			setup: func() {
+				clearDB(t)
+			},
+			args:      []string{},
+			wantError: false,
+		},
+		{
+			name: "Too many arguments",
+			setup: func() {
+				clearDB(t)
+			},
+			args:      []string{"extra"},
+			wantError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
+
+			// Capture output
+			oldStdout := os.Stdout
+			_, w, _ := os.Pipe()
+			os.Stdout = w
+
+			err := ClearDB(tt.args)
+
+			if err := w.Close(); err != nil {
+				t.Fatalf("failed to close pipe: %v", err)
+			}
+			os.Stdout = oldStdout
+
+			// Check if error matches expectation
+			if tt.wantError && err == nil {
+				t.Errorf("ClearDB(%v) expected error, got nil", tt.args)
+				return
+			}
+			if !tt.wantError && err != nil {
+				t.Errorf("ClearDB(%v) unexpected error: %v", tt.args, err)
+				return
+			}
+
+			// If no error expected, verify database is empty
+			if !tt.wantError {
+				var count int64
+				testDB.Model(&schema.Task{}).Count(&count)
+				if count != 0 {
+					t.Errorf("ClearDB(%v) should have cleared all tasks, but found %d tasks", tt.args, count)
 				}
 			}
 		})
