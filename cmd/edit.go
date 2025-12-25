@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"levyvix/togo/internal"
 
 	"github.com/spf13/cobra"
@@ -14,7 +15,10 @@ var editCmd = &cobra.Command{
 Exemplo:
 	togo edit <id> <nova descrição>`,
 	Run: func(cmd *cobra.Command, args []string) {
-		internal.EditFuncDB(args)
+		err := internal.EditFuncDB(args)
+		if err != nil {
+			fmt.Printf("Erro: %v\n", err)
+		}
 	},
 }
 

@@ -30,7 +30,9 @@ func init() {
 	}
 
 	// Migrate the schema
-	testDB.AutoMigrate(&schema.Task{})
+	if err := testDB.AutoMigrate(&schema.Task{}); err != nil {
+		panic("failed to migrate test database")
+	}
 
 	// Replace the global DB with the test database
 	database.DB = testDB
@@ -115,7 +117,9 @@ func TestCreateFuncDB(t *testing.T) {
 
 			CreateFuncDB(tt.args)
 
-			w.Close()
+			if err := w.Close(); err != nil {
+				t.Fatalf("failed to close pipe: %v", err)
+			}
 			os.Stdout = oldStdout
 
 			// Verify task was created
@@ -187,7 +191,9 @@ func TestDoneFuncDB(t *testing.T) {
 
 			DoneFuncDB(args)
 
-			w.Close()
+			if err := w.Close(); err != nil {
+				t.Fatalf("failed to close pipe: %v", err)
+			}
 			os.Stdout = oldStdout
 
 			if tt.checkDone && taskID > 0 {
@@ -245,7 +251,9 @@ func TestDeleteFuncDB(t *testing.T) {
 
 			DeleteFuncDB(args)
 
-			w.Close()
+			if err := w.Close(); err != nil {
+				t.Fatalf("failed to close pipe: %v", err)
+			}
 			os.Stdout = oldStdout
 
 			// If verifying, check task was deleted
@@ -316,7 +324,9 @@ func TestEditFuncDB(t *testing.T) {
 
 			EditFuncDB(args)
 
-			w.Close()
+			if err := w.Close(); err != nil {
+				t.Fatalf("failed to close pipe: %v", err)
+			}
 			os.Stdout = oldStdout
 
 			if tt.expectedDesc != "" && taskID > 0 {
@@ -386,7 +396,9 @@ func TestListFuncDB(t *testing.T) {
 
 			ListFuncDB()
 
-			w.Close()
+			if err := w.Close(); err != nil {
+				t.Fatalf("failed to close pipe: %v", err)
+			}
 			output, _ := io.ReadAll(reader)
 			os.Stdout = oldStdout
 
@@ -421,7 +433,9 @@ func BenchmarkCreateFuncDB(b *testing.B) {
 		CreateFuncDB([]string{"Benchmark task"})
 	}
 
-	w.Close()
+	if err := w.Close(); err != nil {
+		b.Fatalf("failed to close pipe: %v", err)
+	}
 	os.Stdout = oldStdout
 }
 
@@ -443,6 +457,8 @@ func BenchmarkListFuncDB(b *testing.B) {
 		ListFuncDB()
 	}
 
-	w.Close()
+	if err := w.Close(); err != nil {
+		b.Fatalf("failed to close pipe: %v", err)
+	}
 	os.Stdout = oldStdout
 }

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"levyvix/togo/internal"
 
 	"github.com/spf13/cobra"
@@ -19,7 +20,10 @@ Exemplos:
   togo create "Fazer compras"
   togo create "Revisar código"`,
 	Run: func(cmd *cobra.Command, args []string) {
-		internal.CreateFuncDB(args)
+		err := internal.CreateFuncDB(args)
+		if err != nil {
+			fmt.Println("Erro:", err)
+		}
 	},
 }
 

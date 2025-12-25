@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"levyvix/togo/internal"
 
 	"github.com/spf13/cobra"
@@ -17,7 +18,10 @@ Exemplo:
   togo delete 1
   togo delete 5`,
 	Run: func(cmd *cobra.Command, args []string) {
-		internal.DeleteFuncDB(args)
+		err := internal.DeleteFuncDB(args)
+		if err != nil {
+			fmt.Println("Erro:", err)
+		}
 	},
 }
 

@@ -20,5 +20,7 @@ func InitDB() {
 	if err != nil {
 		panic("failed to connect database")
 	}
-	DB.AutoMigrate(&schema.Task{})
+	if err := DB.AutoMigrate(&schema.Task{}); err != nil {
+		panic("failed to migrate database")
+	}
 }

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"levyvix/togo/internal"
 	"log"
 
@@ -25,7 +26,10 @@ Exemplo:
 		if len(args) != 0 {
 			log.Fatalf("Erro: esse comando nao aceita argumentos. voce passou %d argumentos\n", len(args))
 		}
-		internal.ListFuncDB()
+		err := internal.ListFuncDB()
+		if err != nil {
+			fmt.Printf("Erro: %v\n", err)
+		}
 	},
 }
 

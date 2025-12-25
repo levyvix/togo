@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"levyvix/togo/internal"
 
 	"github.com/spf13/cobra"
@@ -16,7 +17,11 @@ O ID deve ser fornecido como um argumento numérico.
 Exemplo:
   togo done 1`,
 	Run: func(cmd *cobra.Command, args []string) {
-		internal.DoneFuncDB(args)
+		err := internal.DoneFuncDB(args)
+		if err != nil {
+			fmt.Println("Erro:", err)
+
+		}
 	},
 }
 
