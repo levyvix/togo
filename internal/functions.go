@@ -10,9 +10,20 @@ import (
 	"time"
 )
 
+const (
+	MsgTaskCreated = "Tarefa criada com sucesso."
+	MsgTaskDone    = "Tarefa marcada como concluida."
+	MsgTaskDeleted = "Tarefa deletada com sucesso."
+	MsgTaskUpdated = "Tarefa atualizada com sucesso."
+)
+
 func CreateFuncDB(args []string) error {
 	if len(args) != 1 {
-		return fmt.Errorf("Comando aceita apenas um argumento. Voce passou %d argumentos\n", len(args))
+		return fmt.Errorf("este comando aceita apenas um argumento, você passou %d", len(args))
+	}
+
+	if args[0] == "" || strings.TrimSpace(args[0]) == "" {
+		return fmt.Errorf("a descrição não pode estar vazia")
 	}
 
 	descricao := args[0]
@@ -23,46 +34,57 @@ func CreateFuncDB(args []string) error {
 	}
 
 	database.DB.Create(&novaTask)
-	fmt.Println("Tarefa Criada!")
+	fmt.Println(MsgTaskCreated)
 	return nil
 }
 
 func DoneFuncDB(args []string) error {
 	if len(args) != 1 {
-		return fmt.Errorf("Esse comando aceita somente 1 argumento. Você passou %d argumentos\n", len(args))
+		return fmt.Errorf("este comando aceita apenas um argumento, você passou %d argumentos", len(args))
 	}
+
 	id, err := strconv.Atoi(args[0])
 	if err != nil {
-		return fmt.Errorf("Voce precisa passar um numero. Voce passou '%v'\n", args[0])
+		return fmt.Errorf("nao foi possivel convertar '%v' para inteiro", args[0])
 	}
+
 	var t schema.Task
-	database.DB.First(&t, id)
+	result := database.DB.First(&t, id)
+	if result.Error != nil {
+		return fmt.Errorf("tarefa com ID %d não existe: %w", id, result.Error)
+	}
+
+	// tarefa já está feita?
+	if t.Done {
+		return fmt.Errorf("tarefa %d já está concluída", id)
+	}
 
 	t.Done = true
 	now := time.Now()
 	t.DoneAt = &now
-	database.DB.Save(&t)
-	fmt.Println("Tarefa marcada como concluida!")
+	result = database.DB.Save(&t)
+	if result.Error != nil {
+		return fmt.Errorf("erro ao salvar a tarefa no banco de dados: %w", result.Error)
+	}
+	fmt.Println(MsgTaskDone)
 	return nil
-
 }
 
 func DeleteFuncDB(args []string) error {
 	if len(args) != 1 {
-		return fmt.Errorf("Erro: voce deve fornecer o ID da tarefa a deletar\n")
+		return fmt.Errorf("este comando aceita apenas um argumento, você passou %d", len(args))
 	}
 
-	id := args[0]
-	taskID, err := strconv.Atoi(id)
+	taskID, err := strconv.Atoi(args[0])
 	if err != nil {
-		return fmt.Errorf("Voce precisa passar um inteiro para o ID. voce passou %v\n", id)
+		return fmt.Errorf("o ID deve ser um número inteiro, você passou '%v'", args[0])
 	}
 
 	result := database.DB.Delete(&schema.Task{}, taskID)
 	if result.RowsAffected == 0 {
-		return fmt.Errorf("Nao foi possivel encontrar a tarefa com ID %v\n", id)
+		return fmt.Errorf("tarefa com ID %d não existe", taskID)
 	}
-	fmt.Printf("Tarefa %v deletada com sucesso!\n", id)
+	fmt.Println(MsgTaskDeleted)
 	return nil
 }
 
@@ -98,7 +120,8 @@ func ListFuncDB() error {
 
 	result := database.DB.Order("id asc").Find(&tasks)
 	if result.RowsAffected == 0 {
-		return fmt.Errorf("Nenhuma task para mostrar. Crie uma usando o comando 'create'")
+		fmt.Println("nenhuma task para mostrar. Crie uma usando o comando 'create'")
+		return nil
 	}
 
 	fmt.Println("\n📋 Lista de Tarefas:")
@@ -121,25 +144,31 @@ func ListFuncDB() error {
 
 func EditFuncDB(args []string) error {
 	if len(args) != 2 {
-		return fmt.Errorf("Somente ID e Nova Descrição são permitidos. Voce passou %d argumentos\n", len(args))
+		return fmt.Errorf("este comando aceita dois argumentos (ID e descrição), você passou %d", len(args))
 	}
-	id := args[0]
-	novaDescricao := args[1]
 
-	taskID, err := strconv.Atoi(id)
+	taskID, err := strconv.Atoi(args[0])
 	if err != nil {
-		return fmt.Errorf("Voce precisa passar um inteiro como ID. voce passou %v\n", id)
+		return fmt.Errorf("o ID deve ser um número inteiro, você passou '%v'", args[0])
+	}
+
+	novaDescricao := args[1]
+	if novaDescricao == "" || strings.TrimSpace(novaDescricao) == "" {
+		return fmt.Errorf("a descrição não pode estar vazia")
 	}
 
 	var t schema.Task
 	result := database.DB.First(&t, taskID)
-	if result.RowsAffected == 0 {
-		return fmt.Errorf("Nao achei tarefa com id %v\n", id)
+	if result.Error != nil {
+		return fmt.Errorf("tarefa com ID %d não existe: %w", taskID, result.Error)
 	}
 
 	t.Description = novaDescricao
-	database.DB.Save(&t)
-	fmt.Println("Tarefa atualizada com sucesso!")
-	return nil
+	result = database.DB.Save(&t)
+	if result.Error != nil {
+		return fmt.Errorf("erro ao salvar a tarefa no banco de dados: %w", result.Error)
+	}
 
+	fmt.Println(MsgTaskUpdated)
+	return nil
 }

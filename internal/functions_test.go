@@ -104,6 +104,26 @@ func TestCreateFuncDB(t *testing.T) {
 			args:      []string{"Fazer café com açúcar!"},
 			wantError: false,
 		},
+		{
+			name:      "No arguments",
+			args:      []string{},
+			wantError: true,
+		},
+		{
+			name:      "Too many arguments",
+			args:      []string{"Task 1", "Task 2"},
+			wantError: true,
+		},
+		{
+			name:      "Empty description",
+			args:      []string{""},
+			wantError: true,
+		},
+		{
+			name:      "Whitespace only description",
+			args:      []string{"   "},
+			wantError: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -115,31 +135,44 @@ func TestCreateFuncDB(t *testing.T) {
 			_, w, _ := os.Pipe()
 			os.Stdout = w
 
-			CreateFuncDB(tt.args)
+			err := CreateFuncDB(tt.args)
 
 			if err := w.Close(); err != nil {
 				t.Fatalf("failed to close pipe: %v", err)
 			}
 			os.Stdout = oldStdout
 
-			// Verify task was created
-			var count int64
-			testDB.Model(&schema.Task{}).Count(&count)
-			if count != 1 {
-				t.Errorf("CreateFuncDB(%v) should have created 1 task, but created %d", tt.args, count)
+			// Check if error matches expectation
+			if tt.wantError && err == nil {
+				t.Errorf("CreateFuncDB(%v) expected error, got nil", tt.args)
+				return
+			}
+			if !tt.wantError && err != nil {
+				t.Errorf("CreateFuncDB(%v) unexpected error: %v", tt.args, err)
+				return
 			}
 
-			// Verify task content
-			var task schema.Task
-			testDB.First(&task)
-			if task.Description != tt.args[0] {
-				t.Errorf("CreateFuncDB(%v) description = %q, want %q", tt.args, task.Description, tt.args[0])
-			}
-			if task.Done != false {
-				t.Errorf("CreateFuncDB(%v) Done = %v, want false", tt.args, task.Done)
-			}
-			if task.DoneAt != nil {
-				t.Errorf("CreateFuncDB(%v) DoneAt = %v, want nil", tt.args, task.DoneAt)
+			// Only verify task content if we don't expect an error
+			if !tt.wantError {
+				// Verify task was created
+				var count int64
+				testDB.Model(&schema.Task{}).Count(&count)
+				if count != 1 {
+					t.Errorf("CreateFuncDB(%v) should have created 1 task, but created %d", tt.args, count)
+				}
+
+				// Verify task content
+				var task schema.Task
+				testDB.First(&task)
+				if task.Description != tt.args[0] {
+					t.Errorf("CreateFuncDB(%v) description = %q, want %q", tt.args, task.Description, tt.args[0])
+				}
+				if task.Done != false {
+					t.Errorf("CreateFuncDB(%v) Done = %v, want false", tt.args, task.Done)
+				}
+				if task.DoneAt != nil {
+					t.Errorf("CreateFuncDB(%v) DoneAt = %v, want nil", tt.args, task.DoneAt)
+				}
 			}
 		})
 	}
@@ -152,6 +185,7 @@ func TestDoneFuncDB(t *testing.T) {
 		setup     func() uint
 		args      []string
 		checkDone bool
+		wantError bool
 	}{
 		{
 			name: "Mark valid task as done",
@@ -162,6 +196,7 @@ func TestDoneFuncDB(t *testing.T) {
 			},
 			args:      []string{"1"},
 			checkDone: true,
+			wantError: false,
 		},
 		{
 			name: "Non-existent task ID",
@@ -170,6 +205,46 @@ func TestDoneFuncDB(t *testing.T) {
 			},
 			args:      []string{"999"},
 			checkDone: false,
+			wantError: true,
+		},
+		{
+			name: "No arguments",
+			setup: func() uint {
+				return 0
+			},
+			args:      []string{},
+			checkDone: false,
+			wantError: true,
+		},
+		{
+			name: "Too many arguments",
+			setup: func() uint {
+				return 0
+			},
+			args:      []string{"1", "2"},
+			checkDone: false,
+			wantError: true,
+		},
+		{
+			name: "Non-numeric ID",
+			setup: func() uint {
+				return 0
+			},
+			args:      []string{"abc"},
+			checkDone: false,
+			wantError: true,
+		},
+		{
+			name: "Already completed task",
+			setup: func() uint {
+				now := time.Now()
+				task := schema.Task{Description: "Done task", Done: true, DoneAt: &now}
+				testDB.Create(&task)
+				return task.ID
+			},
+			args:      []string{"1"},
+			checkDone: false,
+			wantError: true,
 		},
 	}
 
@@ -178,9 +253,9 @@ func TestDoneFuncDB(t *testing.T) {
 			clearDB(t)
 			taskID := tt.setup()
 
-			// Use the actual task ID in the arguments
+			// Use the actual task ID in the arguments if needed
 			args := tt.args
-			if taskID > 0 && len(args) > 0 {
+			if taskID > 0 && len(args) > 0 && args[0] != "abc" {
 				args = []string{fmt.Sprintf("%d", taskID)}
 			}
 
@@ -189,14 +264,24 @@ func TestDoneFuncDB(t *testing.T) {
 			_, w, _ := os.Pipe()
 			os.Stdout = w
 
-			DoneFuncDB(args)
+			err := DoneFuncDB(args)
 
 			if err := w.Close(); err != nil {
 				t.Fatalf("failed to close pipe: %v", err)
 			}
 			os.Stdout = oldStdout
 
-			if tt.checkDone && taskID > 0 {
+			// Check if error matches expectation
+			if tt.wantError && err == nil {
+				t.Errorf("DoneFuncDB(%v) expected error, got nil", args)
+				return
+			}
+			if !tt.wantError && err != nil {
+				t.Errorf("DoneFuncDB(%v) unexpected error: %v", args, err)
+				return
+			}
+
+			if tt.checkDone && taskID > 0 && !tt.wantError {
 				// Verify task was marked as done
 				var task schema.Task
 				testDB.First(&task, taskID)
@@ -214,9 +299,11 @@ func TestDoneFuncDB(t *testing.T) {
 // TestDeleteFuncDB tests deleting a task
 func TestDeleteFuncDB(t *testing.T) {
 	tests := []struct {
-		name     string
-		setup    func() uint
-		verifyID bool
+		name      string
+		setup     func() uint
+		args      []string
+		verifyID  bool
+		wantError bool
 	}{
 		{
 			name: "Delete existing task",
@@ -225,14 +312,45 @@ func TestDeleteFuncDB(t *testing.T) {
 				testDB.Create(&task)
 				return task.ID
 			},
-			verifyID: true,
+			args:      []string{"1"},
+			verifyID:  true,
+			wantError: false,
 		},
 		{
 			name: "Delete non-existent task",
 			setup: func() uint {
 				return 999
 			},
-			verifyID: false,
+			args:      []string{"999"},
+			verifyID:  false,
+			wantError: true,
+		},
+		{
+			name: "No arguments",
+			setup: func() uint {
+				return 0
+			},
+			args:      []string{},
+			verifyID:  false,
+			wantError: true,
+		},
+		{
+			name: "Too many arguments",
+			setup: func() uint {
+				return 0
+			},
+			args:      []string{"1", "2"},
+			verifyID:  false,
+			wantError: true,
+		},
+		{
+			name: "Non-numeric ID",
+			setup: func() uint {
+				return 0
+			},
+			args:      []string{"xyz"},
+			verifyID:  false,
+			wantError: true,
 		},
 	}
 
@@ -241,23 +359,36 @@ func TestDeleteFuncDB(t *testing.T) {
 			clearDB(t)
 			taskID := tt.setup()
 
-			// Use the actual task ID in the arguments
-			args := []string{fmt.Sprintf("%d", taskID)}
+			// Use the actual task ID in arguments if needed
+			args := tt.args
+			if taskID > 0 && len(args) > 0 && args[0] != "xyz" {
+				args = []string{fmt.Sprintf("%d", taskID)}
+			}
 
 			// Capture output
 			oldStdout := os.Stdout
 			_, w, _ := os.Pipe()
 			os.Stdout = w
 
-			DeleteFuncDB(args)
+			err := DeleteFuncDB(args)
 
 			if err := w.Close(); err != nil {
 				t.Fatalf("failed to close pipe: %v", err)
 			}
 			os.Stdout = oldStdout
 
+			// Check if error matches expectation
+			if tt.wantError && err == nil {
+				t.Errorf("DeleteFuncDB(%v) expected error, got nil", args)
+				return
+			}
+			if !tt.wantError && err != nil {
+				t.Errorf("DeleteFuncDB(%v) unexpected error: %v", args, err)
+				return
+			}
+
 			// If verifying, check task was deleted
-			if tt.verifyID && taskID > 0 {
+			if tt.verifyID && taskID > 0 && !tt.wantError {
 				var count int64
 				testDB.Model(&schema.Task{}).Where("id = ?", taskID).Count(&count)
 				if count != 0 {
@@ -275,6 +406,7 @@ func TestEditFuncDB(t *testing.T) {
 		setup        func() uint
 		args         []string
 		expectedDesc string
+		wantError    bool
 	}{
 		{
 			name: "Edit existing task",
@@ -285,6 +417,7 @@ func TestEditFuncDB(t *testing.T) {
 			},
 			args:         []string{"1", "Nova descrição"},
 			expectedDesc: "Nova descrição",
+			wantError:    false,
 		},
 		{
 			name: "Edit with special characters",
@@ -295,6 +428,7 @@ func TestEditFuncDB(t *testing.T) {
 			},
 			args:         []string{"1", "Fazer café com açúcar e pão!"},
 			expectedDesc: "Fazer café com açúcar e pão!",
+			wantError:    false,
 		},
 		{
 			name: "Edit non-existent task",
@@ -302,7 +436,66 @@ func TestEditFuncDB(t *testing.T) {
 				return 999
 			},
 			args:         []string{"999", "New description"},
-			expectedDesc: "", // No verification needed
+			expectedDesc: "",
+			wantError:    true,
+		},
+		{
+			name: "No arguments",
+			setup: func() uint {
+				return 0
+			},
+			args:         []string{},
+			expectedDesc: "",
+			wantError:    true,
+		},
+		{
+			name: "Only one argument",
+			setup: func() uint {
+				return 0
+			},
+			args:         []string{"1"},
+			expectedDesc: "",
+			wantError:    true,
+		},
+		{
+			name: "Too many arguments",
+			setup: func() uint {
+				return 0
+			},
+			args:         []string{"1", "desc", "extra"},
+			expectedDesc: "",
+			wantError:    true,
+		},
+		{
+			name: "Non-numeric ID",
+			setup: func() uint {
+				return 0
+			},
+			args:         []string{"abc", "New description"},
+			expectedDesc: "",
+			wantError:    true,
+		},
+		{
+			name: "Empty description",
+			setup: func() uint {
+				task := schema.Task{Description: "Old"}
+				testDB.Create(&task)
+				return task.ID
+			},
+			args:         []string{"1", ""},
+			expectedDesc: "",
+			wantError:    true,
+		},
+		{
+			name: "Whitespace only description",
+			setup: func() uint {
+				task := schema.Task{Description: "Old"}
+				testDB.Create(&task)
+				return task.ID
+			},
+			args:         []string{"1", "   "},
+			expectedDesc: "",
+			wantError:    true,
 		},
 	}
 
@@ -311,9 +504,9 @@ func TestEditFuncDB(t *testing.T) {
 			clearDB(t)
 			taskID := tt.setup()
 
-			// Use the actual task ID in the arguments
+			// Use the actual task ID in the arguments if needed
 			args := tt.args
-			if taskID > 0 && len(args) > 1 {
+			if taskID > 0 && len(args) > 1 && args[0] != "abc" {
 				args = []string{fmt.Sprintf("%d", taskID), tt.args[1]}
 			}
 
@@ -322,14 +515,24 @@ func TestEditFuncDB(t *testing.T) {
 			_, w, _ := os.Pipe()
 			os.Stdout = w
 
-			EditFuncDB(args)
+			err := EditFuncDB(args)
 
 			if err := w.Close(); err != nil {
 				t.Fatalf("failed to close pipe: %v", err)
 			}
 			os.Stdout = oldStdout
 
-			if tt.expectedDesc != "" && taskID > 0 {
+			// Check if error matches expectation
+			if tt.wantError && err == nil {
+				t.Errorf("EditFuncDB(%v) expected error, got nil", args)
+				return
+			}
+			if !tt.wantError && err != nil {
+				t.Errorf("EditFuncDB(%v) unexpected error: %v", args, err)
+				return
+			}
+
+			if tt.expectedDesc != "" && taskID > 0 && !tt.wantError {
 				// Verify task was updated
 				var task schema.Task
 				testDB.First(&task, taskID)
@@ -353,7 +556,7 @@ func TestListFuncDB(t *testing.T) {
 			setup: func() {
 				clearDB(t)
 			},
-			checkContains: []string{"Nenhuma task"},
+			checkContains: []string{"nenhuma task"},
 		},
 		{
 			name: "List single task",
@@ -394,7 +597,9 @@ func TestListFuncDB(t *testing.T) {
 			reader, w, _ := os.Pipe()
 			os.Stdout = w
 
-			ListFuncDB()
+			if err := ListFuncDB(); err != nil {
+				t.Fatalf("ListFuncDB failed: %v", err)
+			}
 
 			if err := w.Close(); err != nil {
 				t.Fatalf("failed to close pipe: %v", err)
@@ -430,7 +635,7 @@ func BenchmarkCreateFuncDB(b *testing.B) {
 	os.Stdout = w
 
 	for b.Loop() {
-		CreateFuncDB([]string{"Benchmark task"})
+		_ = CreateFuncDB([]string{"Benchmark task"})
 	}
 
 	if err := w.Close(); err != nil {
@@ -454,7 +659,7 @@ func BenchmarkListFuncDB(b *testing.B) {
 	os.Stdout = w
 
 	for b.Loop() {
-		ListFuncDB()
+		_ = ListFuncDB()
 	}
 
 	if err := w.Close(); err != nil {
